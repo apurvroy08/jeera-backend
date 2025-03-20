@@ -10,14 +10,22 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Connect to MongoDB
-mongoose
-    .connect(process.env.MONGO_URI)
-    .then(() => console.log("MongoDB Connected"))
-    .catch((err) => {
+// Connect to MongoDB using Try-Catch
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.MONGO_URI, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
+        console.log("✅ MongoDB Connected");
+    } catch (err) {
         console.error("❌ MongoDB Connection Error:", err);
         process.exit(1); // Stop server if DB connection fails
-    });
+    }
+};
+
+// Call the function before starting the server
+connectDB();
 
 // User Schema
 const UserSchema = new mongoose.Schema({
@@ -110,6 +118,8 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/addTasks", async (req, res) => {
     try {
         const { project, taskName, status, taskDetails, remark } = req.body;
+        console.log(req.body, "kljlkjkljl");
+
 
         if (!taskName || !status || !taskDetails || !remark) {
             return res.status(400).json({ msg: "All fields are required" });
@@ -124,12 +134,9 @@ app.post("/api/addTasks", async (req, res) => {
     }
 });
 
-app.get("/api/getTasks/:projectId", async (req, res) => {
+app.get("/api/getTasks", async (req, res) => {
     try {
-        const { projectId } = req.params;
-
-        // Find tasks assigned to the specific user
-        const tasks = await Task.find({ project: projectId });
+        const tasks = await Task.find();
 
         res.status(200).json(tasks);
     } catch (error) {
